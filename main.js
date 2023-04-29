@@ -1,47 +1,40 @@
-const scriptFile = process.argv[2];
 const fs = require('fs');
 
-const commands = fs.readFileSync(scriptFile, 'utf-8').trim().split(/\n/);
+const {displayPwd, listFiles, changeDirectory} = require('./commands.js');
 
-const pwd = function() {
-  return process.env.PWD;
+const operations = {
+  'pwd': displayPwd,
+  'ls': listFiles,
+  'cd': changeDirectory
 };
 
-const ls = function() {
-  return fs.readdirSync(process.env.PWD).join(' ');
+const execute = function(commands, state) {
+  return commands.reduce(function(state, command) {
+    const [operation, ...args] = command;
+    return operations[operation](state, args);
+  }, state);
 };
 
-const cd = function(directoryPath) {
-  process.env.PWD += `/${directoryPath}`;
+const parse = function(tokens) {
+  return tokens.map(function(command) {
+    return command.split(' ');
+  });
 };
 
-const extractPath = function(command) {
-  return command.split(" ")[1];
+const display = function(output) {
+  console.log(output.join('\n\n'));
 }
 
-const operations = {pwd, ls, cd};
-
-const runCommands = function(commands) {
-  const output = [];
-
-  for(const command of commands) {
-    if(/^cd /.test(command)) {
-      const directoryPath = extractPath(command);
-      operations.cd(directoryPath);
-    } else {
-      output.push(operations[command]());
-    }
-  }
-
-  return output.join('\n\n');
-};
-
-const display = function(text) {
-  console.log(text);
-};
-
 const main = function() {
-  display(runCommands(commands));
+  const scriptFile = process.argv[2];
+  const tokens = fs.readFileSync(scriptFile, 'utf-8').trim().split(/\n/);
+  const env = {pwd: process.env.PWD};
+  const output = [];
+  const state = {env, output};
+  const commands = parse(tokens);
+  const newState = execute(commands, state);
+  console.log(newState);
+  display(newState.output);
 };
 
 main();
