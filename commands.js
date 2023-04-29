@@ -1,43 +1,47 @@
 const fs = require('fs');
 
-const normalizePath = function(path) {
-  const pathTokens = path.split('/');
-  const normalizePathTokens = [];
-  for(const token of pathTokens) {
-    if(token === '..') {
-      normalizePathTokens.pop();
-    }
-    else if(token !== '.') {
-      normalizePathTokens.push(token);
-    }
+const resolvedComponents = function(normalizePathComponents, component) {
+  const components = [...normalizePathComponents];
+  if(component === '..') {
+    components.pop();
+  }
+  if((/\w/).test(component)) {
+    components.push(component);
   }
 
-  return normalizePathTokens.join('/');
-};
+  return components;
+}
 
-const displayPwd = function(state) {
-  state.output.push(state.env.pwd);
-  return state;
-};
-
-const listFiles = function(state) {
-  const filesList = fs.readdirSync(state.env.pwd).join(' ');
-  state.output.push(filesList);
-  return state;
-};
-
-const changeDirectory = function(state, directoryPath) {
-  let pwd = state.env.pwd;
-  pwd = directoryPath.toString().startsWith('/') ? directoryPath : pwd + `/${directoryPath}`;
-
-  if(!fs.existsSync(pwd)) {
-    console.log('cd : no such file or directory : ', directoryPath);
-    process.exit(1);
+const normalizePath = function(path, pwd) {
+  const pathComponents = path.split('/');
+  let normalizePathComponents = pwd.split('/');
+  for(const component of pathComponents) {
+    normalizePathComponents = resolvedComponents(normalizePathComponents, component);
   }
 
-  pwd = normalizePath(pwd);
-  state.env.pwd = pwd;
-  return state;
+  return normalizePathComponents.join('/');
+};
+
+const displayPwd = function(pwd) {
+  const output = pwd;
+  return {pwd, output, exitCode: 0};
+};
+
+const listFiles = function(pwd) {
+  const filesList = fs.readdirSync(pwd).join(' ');
+  return {pwd, output: filesList, exitCode: 0};
+};
+
+const changeDirectory = function(pwd, directoryPath) {
+  let newPwd = pwd;
+  newPwd = directoryPath.toString().startsWith('/') ? directoryPath : newPwd + `/${directoryPath}`;
+
+  if(!fs.existsSync(newPwd)) {
+    return {pwd, output: 'cd : no such file or directory', exitCode: 1};
+  }
+
+  newPwd = normalizePath(directoryPath.toString(), pwd);
+  return {pwd: newPwd, exitCode: 0};
 };
 
 exports.displayPwd = displayPwd;

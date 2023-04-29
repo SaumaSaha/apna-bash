@@ -3,8 +3,9 @@ ls
 cd workspace
 pwd
 ls
-cd personal/../personal/.
+cd personal/../personal/../personal
 pwd
 ls
 cd ..
+cd ../hello
 pwd
