@@ -1,6 +1,6 @@
 const parse = function(tokens) {
-  return tokens.map(function(command) {
-    return command.split(' ');
+  return tokens.map(function(token) {
+    return token.split(' ');
   });
 };
 

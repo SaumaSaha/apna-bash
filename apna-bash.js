@@ -1,4 +1,5 @@
 const fs = require('fs');
+const {parse} = require('./parser.js');
 const {displayPwd, listFiles, changeDirectory} = require('./commands.js');
 
 const methodToExecute = function(command) {
@@ -11,17 +12,19 @@ const methodToExecute = function(command) {
   return instructions[command];
 };
 
-const execute = function({env, log}, commandLine) {
+const execute = function(state, commandLine) {
   const [command, ...args] = commandLine;
   const method = methodToExecute(command);
 
   if(method === 'undefined') {
     const message = 'file does not exist';
-    return {env, log: [...log, {command: {'name': command, 'arguments': args}, output: message, exitCode: 1}]};
+    return {environment: state.environment, log: [...state.log, {command: {'name': command, 'arguments': args}, output: message, exitCode: 1}]};
   }
-  const {pwd, output, exitCode} = method(env.pwd, args);
 
-  return {env: {pwd}, log: [...log, {command: {'name': command, 'arguments': args}, output, exitCode}]}
+  const {environment, output, exitCode} = method(state.environment, args);
+  console.log(environment);
+
+  return {environment, log: [...state.log, {command: {'name': command, 'arguments': args}, output, exitCode}]}
 };
 
 const generateTokens = function(souceCode) {
@@ -32,21 +35,15 @@ const getCode = function(filePath) {
   return fs.readFileSync(filePath, 'utf-8');
 };
 
-const parse = function(tokens) {
-  return tokens.map(function(token) {
-    return token.split(' ');
-  });
-};
-
 const run = function(scriptFile) {
   const sourceCode = getCode(scriptFile);
   const tokens = generateTokens(sourceCode);
   const commandLines = parse(tokens);
   const log = [];
-  const env = {
+  const environment = {
     pwd: process.env.PWD
   }
-  return commandLines.reduce(execute, {env, log});
+  return commandLines.reduce(execute, {environment, log});
 };
 
 exports.run = run;

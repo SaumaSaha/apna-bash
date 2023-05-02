@@ -22,26 +22,27 @@ const normalizePath = function(path, pwd) {
   return normalizePathComponents.join('/');
 };
 
-const displayPwd = function(pwd) {
-  const output = pwd;
-  return {pwd, output, exitCode: 0};
+const displayPwd = function(env) {
+  const output = env.pwd;
+  return {environment: {pwd: env.pwd}, output, exitCode: 0};
 };
 
-const listFiles = function(pwd) {
-  const filesList = fs.readdirSync(pwd).join(' ');
-  return {pwd, output: filesList, exitCode: 0};
+const listFiles = function(env) {
+  console.log(env);
+  const filesList = fs.readdirSync(env.pwd).join(' ');
+  return {environment: {pwd: env.pwd}, output: filesList, exitCode: 0};
 };
 
-const changeDirectory = function(pwd, directoryPath) {
-  let newPwd = pwd;
+const changeDirectory = function(env, directoryPath) {
+  let newPwd = env.pwd;
   newPwd = directoryPath.toString().startsWith('/') ? directoryPath : newPwd + `/${directoryPath}`;
 
   if(!fs.existsSync(newPwd)) {
-    return {pwd, output: 'cd : no such file or directory', exitCode: 1};
+    return {environment: {pwd: env.pwd}, output: 'cd : no such file or directory', exitCode: 1};
   }
 
-  newPwd = normalizePath(directoryPath.toString(), pwd);
-  return {pwd: newPwd, exitCode: 0};
+  newPwd = normalizePath(directoryPath.toString(), env.pwd);
+  return {environment: {pwd: newPwd}, exitCode: 0};
 };
 
 exports.displayPwd = displayPwd;

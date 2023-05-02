@@ -6,6 +6,5 @@ ls
 cd personal/../personal/../personal
 pwd
 ls
-cd ..
 cd ../hello
 pwd
